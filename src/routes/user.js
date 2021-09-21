@@ -17,13 +17,18 @@ router.get('/', isAuth(prisma), async (req, res) => {
     }
 })
 
-router.post('/create', async (req, res) => {
+router.post('/create', isAuth(prisma), async (req, res) => {
+    const {user_id, ...rest} = req.body
     try {
-        await prisma.userInfo.create({
-            data: req.body
+        await prisma.userInfo.update({
+            where:{
+                user_id:user_id
+            },
+            data: rest
         })
         res.status(201).send("created")
     } catch (e) {
+        console.log(e)
         res.status(500).send(e)
     }
 })
@@ -45,10 +50,14 @@ router.post('/auth', async (req, res) => {
             data: {
                 email: email,
                 password: hashedPassword,
+                profile:{
+                    create:{email:email}
+                }
             }
         })
         res.status(200).send("authenticated")
     } catch (error) {
+        console.log(error)
         return res.status(500).send(error)
     }
 })
@@ -82,9 +91,8 @@ router.post('/login', async (req, res) => {
         process.env.ACCESS_TOKEN_SECRET,
         {expiresIn: '1h'}
     );
-
     try {
-        return res.status(200).send({ accessToken: accessToken })
+        return res.status(200).send({accessToken: accessToken})
     } catch (error) {
         return res.status(500).send(error)
     }
