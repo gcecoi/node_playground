@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 
 const {PrismaClient} = require('@prisma/client');
-const {isAuth} = require("../middlewares/isAuth");
+const {isAuth, isOwner} = require("../middlewares/userMiddlewares");
 const prisma = new PrismaClient();
 const userRegexp = /^[^\s@]+@[^\s@]+$/i;
 
@@ -17,7 +17,7 @@ router.get('/', isAuth(prisma), async (req, res) => {
     }
 })
 
-router.post('/create', isAuth(prisma), async (req, res) => {
+router.post('/update', isAuth(prisma), isOwner(prisma), async (req, res) => {
     const {user_id, ...rest} = req.body
     try {
         await prisma.userInfo.update({
@@ -26,7 +26,7 @@ router.post('/create', isAuth(prisma), async (req, res) => {
             },
             data: rest
         })
-        res.status(201).send("created")
+        res.status(204).send()
     } catch (e) {
         console.log(e)
         res.status(500).send(e)
